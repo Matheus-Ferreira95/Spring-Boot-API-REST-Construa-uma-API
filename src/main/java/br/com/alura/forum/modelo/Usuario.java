@@ -1,12 +1,15 @@
 package br.com.alura.forum.modelo;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+
+import javax.persistence.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 @Entity
-public class Usuario {
+public class Usuario implements UserDetails { // para o spring saber que essa é uma classe que representa um usuario no sistema
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -14,6 +17,9 @@ public class Usuario {
 	private String nome;
 	private String email;
 	private String senha;
+
+	@ManyToMany(fetch = FetchType.EAGER) // para quando carregar o usuario, já vir junto a lista de perfis dele (pois precisaremos da lista de perfis dele)
+	private List<Perfil> perfis = new ArrayList<>();
 
 	@Override
 	public int hashCode() {
@@ -72,4 +78,43 @@ public class Usuario {
 		this.senha = senha;
 	}
 
+	@Override
+	public Collection<? extends GrantedAuthority> getAuthorities() { /* para o spring security, além de termos uma classe de usuario, precisa ter
+																	tambem uma classe que representa o perfil do usuario(relacionado as permissoes de acesso dele)
+																	essa classe precisa ser tambem uma tabela no nosso banco de dados
+																	*/
+		return this.perfis;
+	}
+
+	@Override
+	public String getPassword() { // o spring para saber a senha do usuario vai utilizar esse método
+		return this.senha;
+	}
+
+	@Override
+	public String getUsername() { // o spring para saber o login do usuario vai utilizar esse método, no nosso caso é o email do usuario
+		return this.email;
+	}
+
+	@Override
+	public boolean isAccountNonExpired() { // esses metodos que devolvem boolean, é para caso vc faça controle na sua aplicação da conta do usuario
+											// do tipo, se a conta ta bloqueada, se tem uma data de expiração oou coisas do genero, nós devolveriamos os atributos
+											// que corresponde a essas informações, no nosso caso não teremos controle mais detalhado, devolveremos true para todos
+		return true;
+	}
+
+	@Override
+	public boolean isAccountNonLocked() {
+		return true;
+	}
+
+	@Override
+	public boolean isCredentialsNonExpired() {
+		return true;
+	}
+
+	@Override
+	public boolean isEnabled() {
+		return true;
+	}
 }

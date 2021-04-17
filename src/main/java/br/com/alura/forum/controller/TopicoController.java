@@ -9,6 +9,12 @@ import br.com.alura.forum.modelo.Topico;
 import br.com.alura.forum.repository.CursoRepository;
 import br.com.alura.forum.repository.TopicoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -30,19 +36,19 @@ public class TopicoController {
     private CursoRepository cursoRepository;
 
     @GetMapping
-    public List<TopicoDto> listaTodos(String nomeCurso) {
-        List<Topico> topicos = topicoRepository.findAll();
-        return TopicoDto.converter(topicos);
-    }
-
-    @GetMapping("/porNome")
-    public List<TopicoDto> lista(@RequestParam String nomeCurso) {
-        List<Topico> topicos = topicoRepository.findByCursoNome(nomeCurso);
+    @Cacheable(value = "listaDeTopicos")
+    public Page<TopicoDto> listaTodos(@RequestParam(required = false) String nomeCurso, @PageableDefault(sort = "id",
+        direction = Sort.Direction.DESC) Pageable pageable) {
+        if (nomeCurso == null) {
+            return TopicoDto.converter(topicoRepository.findAll(pageable));
+        }
+        Page<Topico> topicos = topicoRepository.findByCursoNome(nomeCurso, pageable);
         return TopicoDto.converter(topicos);
     }
 
     @PostMapping
     @Transactional
+    @CacheEvict(value = "listaDeTopicos", allEntries = true)
     public ResponseEntity<TopicoDto> cadastrar(@Valid @RequestBody TopicoForm form, UriComponentsBuilder uriBuilder) {
         Curso curso = cursoRepository.findByNome(form.getNomeCurso());
         Topico topico = new Topico(form.getTitulo(), form.getMensagem(), curso);
@@ -62,6 +68,7 @@ public class TopicoController {
 
     @PutMapping("/{id}")
     @Transactional
+    @CacheEvict(value = "listaDeTopicos", allEntries = true)
     public ResponseEntity<TopicoDto> detalhar(@PathVariable Long id, @Valid @RequestBody AtualizacaoTopicoForm form) {
         Optional<Topico> topico = topicoRepository.findById(id);
         if (topico.isPresent()) {
@@ -72,6 +79,7 @@ public class TopicoController {
 
     @DeleteMapping("/{id}")
     @Transactional
+    @CacheEvict(value = "listaDeTopicos", allEntries = true)
     public ResponseEntity<Void> remover(@PathVariable Long id) {
         Optional<Topico> topico = topicoRepository.findById(id);
         if (topico.isPresent()) {
