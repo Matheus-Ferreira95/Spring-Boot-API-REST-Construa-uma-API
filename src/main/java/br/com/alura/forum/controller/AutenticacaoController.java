@@ -31,13 +31,11 @@ public class AutenticacaoController {
     @PostMapping
     public ResponseEntity<TokenDto> autenticar(@RequestBody @Valid LoginForm form) {
         UsernamePasswordAuthenticationToken dadosLogin = new UsernamePasswordAuthenticationToken(form.getEmail(), form.getSenha());
-        try {
-            Authentication authenticate = authManager.authenticate(dadosLogin);
-            String token = tokenService.gerarToken(authenticate);
-            return ResponseEntity.ok(new TokenDto(token, "Bearer"));
-        } catch (AuthenticationException e) {
-            return ResponseEntity.badRequest().build();
-        }
+
+        Authentication authenticate = authManager.authenticate(dadosLogin);
+        String token = tokenService.gerarToken(authenticate);
+        return ResponseEntity.ok(new TokenDto(token, "Bearer"));
     }
+
 
 }

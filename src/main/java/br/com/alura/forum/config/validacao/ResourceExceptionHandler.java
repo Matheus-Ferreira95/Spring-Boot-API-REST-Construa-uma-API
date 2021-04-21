@@ -4,6 +4,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -21,11 +23,17 @@ public class ResourceExceptionHandler {
 
     @ResponseStatus(code = HttpStatus.BAD_REQUEST)
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public List<ErroDeFormularioDto> validationError(MethodArgumentNotValidException exception) {
-        List<ErroDeFormularioDto> dto = new ArrayList<>();
+    public List<ErrorDetailsDto> validationError(MethodArgumentNotValidException exception) {
+        List<ErrorDetailsDto> dto = new ArrayList<>();
         for (FieldError error : exception.getBindingResult().getFieldErrors()) {
-            dto.add(new ErroDeFormularioDto(error.getField(), messageSource.getMessage(error, LocaleContextHolder.getLocale())));
+            dto.add(new ErrorDetailsDto(error.getField(), messageSource.getMessage(error, LocaleContextHolder.getLocale())));
         }
         return dto;
+    }
+
+    @ResponseStatus(code = HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(AuthenticationException.class)
+    public ErrorDetailsDto handle(AuthenticationException exception){
+        return new ErrorDetailsDto("auth", exception.getMessage());
     }
 }

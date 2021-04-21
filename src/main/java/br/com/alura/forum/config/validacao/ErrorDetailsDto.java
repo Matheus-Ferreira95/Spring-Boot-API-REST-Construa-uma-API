@@ -1,11 +1,11 @@
 package br.com.alura.forum.config.validacao;
 
-public class ErroDeFormularioDto {
+public class ErrorDetailsDto {
 
     private String campo;
     private String erro;
 
-    public ErroDeFormularioDto(String campo, String erro) {
+    public ErrorDetailsDto(String campo, String erro) {
         this.campo = campo;
         this.erro = erro;
     }
